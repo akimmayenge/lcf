@@ -124,6 +124,79 @@ export default async function PlayerProfilePage({
 
   const currentTeam =
     roster?.team ?? null;
+    // --------------------------------
+    // PLAYER MATCH STATISTICS
+    // --------------------------------
+
+    const {
+    data: statsData,
+    error: statsError,
+    } =
+    await supabase
+        .from("player_match_stats")
+        .select(`
+        present,
+        goals,
+        yellow_cards,
+        red_cards,
+        is_motm
+        `)
+        .eq("player_id", player.id);
+
+
+    if (statsError) {
+    console.error(
+        "Player stats error:",
+        statsError
+    );
+    }
+
+
+    type PlayerMatchStat = {
+    present: boolean;
+    goals: number;
+    yellow_cards: number;
+    red_cards: number;
+    is_motm: boolean;
+    };
+
+
+    const playerMatchStats =
+    (statsData ?? []) as PlayerMatchStat[];
+    const gamesPlayed =
+  playerMatchStats.filter(
+    (stat) => stat.present
+  ).length;
+
+
+const totalGoals =
+  playerMatchStats.reduce(
+    (total, stat) =>
+      total + stat.goals,
+    0
+  );
+
+
+const totalYellowCards =
+  playerMatchStats.reduce(
+    (total, stat) =>
+      total + stat.yellow_cards,
+    0
+  );
+
+
+const totalRedCards =
+  playerMatchStats.reduce(
+    (total, stat) =>
+      total + stat.red_cards,
+    0
+  );
+
+
+const totalMotm =
+  playerMatchStats.filter(
+    (stat) => stat.is_motm
+  ).length;
 
 
   // --------------------------------
@@ -252,7 +325,7 @@ export default async function PlayerProfilePage({
               </p>
 
               <p className="mt-2 text-3xl font-black">
-                0
+                {gamesPlayed}
               </p>
 
             </div>
@@ -267,7 +340,7 @@ export default async function PlayerProfilePage({
               </p>
 
               <p className="mt-2 text-3xl font-black text-[#00CCCD]">
-                0
+                {totalGoals}
               </p>
 
             </div>
@@ -282,7 +355,7 @@ export default async function PlayerProfilePage({
               </p>
 
               <p className="mt-2 text-3xl font-black">
-                0
+                {totalMotm}
               </p>
 
             </div>
@@ -304,6 +377,34 @@ export default async function PlayerProfilePage({
 
           </div>
 
+        <div className="mt-4 grid grid-cols-2 gap-4">
+
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+
+            <p className="text-xs font-black uppercase tracking-wider text-gray-500">
+            Yellow Cards
+            </p>
+
+            <p className="mt-2 text-2xl font-black">
+            {totalYellowCards}
+            </p>
+
+        </div>
+
+
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+
+            <p className="text-xs font-black uppercase tracking-wider text-gray-500">
+            Red Cards
+            </p>
+
+            <p className="mt-2 text-2xl font-black">
+            {totalRedCards}
+            </p>
+
+        </div>
+
+        </div>  
 
           <p className="mt-4 text-xs text-gray-600">
             Official statistics will update from LCF game sheets.

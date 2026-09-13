@@ -905,10 +905,14 @@ export default async function TeamPage({
 
                 return (
 
-                  <div
+                  <Link
                     key={entry.id}
-                    className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition hover:border-[#00CCCD]/40"
+                    href={`/players/${player.slug}`}
+                    className="block rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition hover:border-[#00CCCD]/40"
                   >
+
+                 
+                  
 
                     <div className="flex items-center gap-4">
 
@@ -944,8 +948,10 @@ export default async function TeamPage({
                       </div>
 
                     </div>
+                    </Link>
 
-                  </div>
+                  
+
 
                 );
 

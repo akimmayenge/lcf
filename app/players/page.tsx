@@ -863,20 +863,23 @@ export default function PlayersPage() {
   return (
 
     <section
-      id="players"
-      className="
-        relative
-        min-h-screen
-        overflow-hidden
-        border-t
-        border-white/10
-        bg-[#030707]
-        px-6
-        py-24
-        text-white
-        md:py-32
-      "
-    >
+  id="players"
+  className="
+    relative
+    min-h-screen
+    overflow-hidden
+    border-t
+    border-white/10
+    bg-[#030707]
+    px-4
+    pb-20
+    pt-40
+    text-white
+    sm:px-6
+    md:pb-32
+    md:pt-44
+  "
+>
 
 
       {/* TURQUOISE BACKGROUND GLOW */}
@@ -908,9 +911,9 @@ export default function PlayersPage() {
 
           
 
-          <h1 className="mt-7 text-4xl font-black tracking-tight md:text-5xl">
-            PLAYER STATISTICS
-          </h1>
+          <h1 className="text-3xl font-black leading-tight tracking-tight sm:text-4xl md:text-5xl">
+          PLAYER STATISTICS
+        </h1>
 
           <p className="mt-4 max-w-2xl text-base leading-7 text-gray-400">
             Follow the LCF individual award races,

@@ -297,11 +297,11 @@ function MatchdaySection({
         "
       >
 
-        <h2 className="text-xl font-black text-white">
+        <h2 className="text-xl font-black leading-tight text-white sm:text-2xl">
           Matchday {number} • 2026-27 Season
         </h2>
 
-        <p className="text-sm font-bold text-gray-500">
+        <p className="text-xs font-bold uppercase tracking-wide text-gray-500 sm:text-sm">
           {date}
         </p>
 
@@ -588,26 +588,42 @@ const { data: databaseMatches, error } = await supabase
 
 
 
-    <section
+        <section
       id="matches"
-      className="min-h-screen bg-[#030707] px-6 py-20 text-white"
-    >
+      className="
+        min-h-screen
+        bg-[#030707]
+        px-4
+        pb-20
+        pt-40
+        text-white
+        sm:px-6
+        md:pb-32
+        md:pt-44
+      "
+>
+    
 
       <div className="mx-auto max-w-7xl">
 
 
         {/* PAGE TITLE */}
-        <div className="mb-12">
+       {/* PAGE TITLE */}
+      <div className="mb-14">
 
-          <h1 className="mt-13 text-4xl font-black text-[#00CCCD]">
-            Matches
-          </h1>
+        <p className="text-xs font-black uppercase tracking-[0.22em] text-gray-500">
+          2026-27 Season
+        </p>
 
-          <p className="mt-2 text-sm text-gray-400">
-            Senior LaLiga LCF • 2026-27 Season
-          </p>
+        <h1 className="mt-2 text-4xl font-black leading-none tracking-tight text-[#00CCCD] sm:text-5xl">
+          Matches
+        </h1>
 
-        </div>
+        <p className="mt-3 text-sm leading-6 text-gray-400 sm:text-base">
+          Senior LaLiga LCF • Official Fixtures
+        </p>
+
+      </div>
 
 
 
