@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+
 import { supabase } from "@/lib/supabase";
 
 import {
@@ -8,224 +9,644 @@ import {
   type LeagueMatch,
 } from "@/lib/leagueStats";
 
+
 export default async function Home() {
-  const { data: teams } = await supabase
-  .from("teams")
-  .select(`
-    id,
-    name,
-    slug,
-    logo_url
-  `)
-  .eq("is_active", true);
+
+  // ==========================================
+  // TEAMS
+  // ==========================================
+
+  const { data: teams } =
+    await supabase
+      .from("teams")
+      .select(`
+        id,
+        name,
+        slug,
+        logo_url
+      `)
+      .eq("is_active", true);
 
 
-const { data: matches } = await supabase
-  .from("matches")
-  .select(`
-    home_team_id,
-    away_team_id,
-    home_score,
-    away_score,
-    status
-  `)
-  .eq("season_id", 1);
+  // ==========================================
+  // MATCHES
+  // ==========================================
+
+  const { data: matches } =
+    await supabase
+      .from("matches")
+      .select(`
+        home_team_id,
+        away_team_id,
+        home_score,
+        away_score,
+        status
+      `)
+      .eq("season_id", 1);
 
 
-const leagueTeams =
-  (teams ?? []) as unknown as LeagueTeam[];
+  const leagueTeams =
+    (teams ?? []) as unknown as LeagueTeam[];
 
-const leagueMatches =
-  (matches ?? []) as unknown as LeagueMatch[];
-
-
-const standings =
-  calculateStandings(
-    leagueTeams,
-    leagueMatches
-  );
+  const leagueMatches =
+    (matches ?? []) as unknown as LeagueMatch[];
 
 
-const topThree =
-  standings.slice(0, 3);
-  
+  const standings =
+    calculateStandings(
+      leagueTeams,
+      leagueMatches
+    );
+
+
+  const topThree =
+    standings.slice(0, 3);
+
+
   return (
-    <main className="bg-black text-white">
 
-      
+    <main className="bg-[#030707] text-white">
 
 
-      {/* HERO SECTION */}
+      {/* ====================================================== */}
+      {/* HERO */}
+      {/* ====================================================== */}
+
       <section
         id="home"
-        className="relative flex min-h-screen items-center justify-center overflow-hidden px-6 py-15"
+        className="
+          relative
+          overflow-hidden
+          px-4
+          pb-16
+          pt-40
+          sm:px-6
+          md:pb-24
+          md:pt-44
+        "
       >
 
-        {/* CYAN GLOW */}
-        <div className="absolute h-[80px] w-[80px] rounded-full bg-[#00CCCD]/15 blur-[150px]"></div>
+        {/* SUBTLE BACKGROUND GLOW */}
 
-        {/* HERO CONTENT */}
-        <div className="relative z-6 text-center">
+        <div
+          className="
+            pointer-events-none
+            absolute
+            left-1/2
+            top-40
+            h-[400px]
+            w-[400px]
+            -translate-x-1/2
+            rounded-full
+            bg-[#00CCCD]/10
+            blur-[180px]
+          "
+        />
 
-          <Image
-            src="/lcf-logo.png"
-            alt="LCF Logo"
-            width={400}
-            height={400}
-            className="mx-auto mb-6 h-auto w-[200px] md:w-[200px]"
-          />
 
-          <h1 className="text-1xl font-black tracking-[0.10em] text-[#00CCCD] md:text-3xl">
-            LCF
-          </h1>
+        <div className="relative mx-auto max-w-7xl">
 
-          <p className="mt-6 text-lg uppercase tracking-[0.23em] text-gray-200">
-            The competition starts here
-          </p>
 
-          <a
-            href="/matches"
-            className="mt-10 inline-block rounded-full border border-[#00CCCD] bg-[#00CCCD] px-8 py-4 font-bold text-black transition duration-300 hover:scale-105 hover:bg-transparent hover:text-[#00CCCD]"
+          {/* HERO GRID */}
+
+          <div
+            className="
+              grid
+              items-center
+              gap-10
+              lg:grid-cols-[1.05fr_0.95fr]
+              lg:gap-16
+            "
           >
-            Explore LCF
-          </a>
-          </div>
-
-          </section>
-
-          <section className= "border-t border-black bg-[#00CCCD]  px py-8">
-          <div className="mx-auto max-w-7xl text-center">
-          <h1 className="text-2xl font-black tracking-[0.10em] md:text-2xl">
-            2026-27 SEASON
-          </h1>
-
-          <p className="mt-8 text-lg font-bold uppercase tracking-[0.20em] text-gray-200">
-            10 Clubs. One League.
-          </p>
-          </div>
-          </section>
-
-         
-          
-          
-
-        
-
-        
 
 
-        
+            {/* ========================================== */}
+            {/* HERO TEXT */}
+            {/* ========================================== */}
 
-        {/* HERO CONTENT */}
-
-        
-
-            {/* STANDINGS PREVIEW */}
-    <section className="border-t border-black/10 bg-[#030707] px-6 py-12">
-
-      <div className="mx-auto max-w-5xl">
-
-        {/* TITLE */}
-        <div className="mb-10 text-center">
-
-          <p className="mb-3 text-3xl font-black uppercase tracking-[0.25em] text-[#00CCCD] md:text-3xl">
-            Competition
-          </p>
-
-          <h2 className="text-3xl font-black text-white md:text-1xl">
-            League Table
-          </h2>
-
-        </div>
+            <div>
 
 
-        {/* SMALL TABLE */}
-        <div className="overflow-hidden rounded-2xl bg-white text-black">
+              {/* SEASON */}
 
-          {/* HEADER */}
-          <div className="grid grid-cols-[50px_1fr_80px] border-b border-gray-200 bg-gray-50 px-5 py-4 text-sm font-bold text-gray-500">
+              <div className="flex items-center gap-3">
 
-            <span>#</span>
+                <div className="h-[3px] w-10 rounded-full bg-[#00CCCD]" />
 
-            <span>TEAM</span>
+                <p className="text-xs font-black uppercase tracking-[0.24em] text-gray-400">
+                  2026-27 Season
+                </p>
 
-            <span className="text-center">
-              PTS
-            </span>
-
-          </div>
+              </div>
 
 
-          {/* LIVE TOP 3 */}
-          {topThree.map((team, index) => (
+              {/* TITLE */}
 
-            <div
-              key={team.teamId}
-              className={`
-                grid grid-cols-[50px_1fr_80px]
-                items-center px-5 py-4
+              <h1
+                className="
+                  mt-5
+                  max-w-3xl
+                  text-4xl
+                  font-black
+                  leading-[0.95]
+                  tracking-tight
+                  sm:text-5xl
+                  md:text-6xl
+                  lg:text-7xl
+                "
+              >
+                Ligue
+                <span className="block text-[#00CCCD]">
+                  Competitive
+                </span>
+                Futsal
+              </h1>
 
-                ${
-                  index < topThree.length - 1
-                    ? "border-b border-gray-200"
-                    : ""
-                }
-              `}
-            >
 
-              {/* POSITION */}
-              <span className="font-black">
-                {team.position}
-              </span>
+              {/* VALUES */}
+
+              <p
+                className="
+                  mt-6
+                  text-xs
+                  font-black
+                  uppercase
+                  tracking-[0.24em]
+                  text-gray-400
+                  sm:text-sm
+                "
+              >
+                Competition • Respect • Professionalism
+              </p>
 
 
-              {/* TEAM */}
-              <Link
-                href={'/teams/${team.slug}'}
-                className="flex items-center gap-3 transition hover:text-[#008E90]"
+              {/* DESCRIPTION */}
+
+              <p
+                className="
+                  mt-6
+                  max-w-xl
+                  text-base
+                  leading-7
+                  text-gray-400
+                  sm:text-lg
+                "
+              >
+                LCF brings clubs and players together for an
+                intense futsal season built around competition,
+                community and player development.
+              </p>
+
+
+              {/* BUTTONS */}
+
+              <div
+                className="
+                  mt-8
+                  grid
+                  gap-3
+                  sm:flex
+                  sm:flex-wrap
+                "
+              >
+
+                <Link
+                  href="/matches"
+                  className="
+                    flex
+                    min-h-[52px]
+                    items-center
+                    justify-center
+                    rounded-xl
+                    bg-[#00CCCD]
+                    px-7
+                    py-3
+                    text-sm
+                    font-black
+                    text-black
+                    transition
+                    hover:bg-[#00E4E5]
+                  "
                 >
-                  <img
-                    src={
-                      team.logoUrl ??
-                      "/lcf-logo.png"
-
-                    }
-                    alt={team.name}
-                    className="h-8 w-8 object-contain"
-                    />
-                    <span className="font-bold">
-                      {team.name}
-                    </span>
+                  View Matches →
                 </Link>
 
 
-              {/* POINTS */}
-              <span className="text-center font-black text-[#00CCCD]">
-                {team.points}
+                <Link
+                  href="/standings"
+                  className="
+                    flex
+                    min-h-[52px]
+                    items-center
+                    justify-center
+                    rounded-xl
+                    border
+                    border-white/15
+                    px-7
+                    py-3
+                    text-sm
+                    font-black
+                    text-white
+                    transition
+                    hover:border-[#00CCCD]
+                    hover:text-[#00CCCD]
+                  "
+                >
+                  View Standings
+                </Link>
+
+              </div>
+
+            </div>
+
+
+
+            {/* ========================================== */}
+            {/* PLAYER PHOTO */}
+            {/* ========================================== */}
+
+            <div
+              className="
+                relative
+                mx-auto
+                w-full
+                max-w-[430px]
+                lg:ml-auto
+              "
+            >
+
+              <div
+                className="
+                  relative
+                  overflow-hidden
+                  rounded-[2rem]
+                  border
+                  border-white/10
+                  bg-white
+                "
+              >
+
+                <Image
+                  src="/lcf-hero-player.jpeg"
+                  alt="LCF futsal player"
+                  width={1187}
+                  height={1772}
+                  priority
+                  className="
+                    h-[430px]
+                    w-full
+                    object-cover
+                    object-[center_25%]
+                    sm:h-[520px]
+                    lg:h-[590px]
+                  "
+                />
+
+
+                {/* DARK BOTTOM FADE */}
+
+                <div
+                  className="
+                    pointer-events-none
+                    absolute
+                    inset-x-0
+                    bottom-0
+                    h-36
+                    bg-gradient-to-t
+                    from-black/80
+                    to-transparent
+                  "
+                />
+
+
+                {/* PHOTO LABEL */}
+
+                <div className="absolute bottom-5 left-5">
+
+                  <p className="text-xs font-black uppercase tracking-[0.20em] text-[#00CCCD]">
+                    LCF
+                  </p>
+
+                  <p className="mt-1 text-sm font-bold text-white">
+                    More than a league.
+                  </p>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+
+          {/* ================================================== */}
+          {/* LEAGUE NUMBERS */}
+          {/* ================================================== */}
+
+          <div
+            className="
+              mt-12
+              grid
+              grid-cols-2
+              gap-3
+              md:mt-16
+              md:grid-cols-4
+            "
+          >
+
+            <LeagueStat
+              value="66"
+              label="Total Matches"
+            />
+
+            <LeagueStat
+              value="18"
+              label="Weeks of Competition"
+            />
+
+            <LeagueStat
+              value="1"
+              label="Champion"
+            />
+
+            <LeagueStat
+              value="$1,100"
+              label="1st Place Prize"
+            />
+
+          </div>
+
+
+        </div>
+
+      </section>
+
+
+
+      {/* ====================================================== */}
+      {/* SEASON MESSAGE */}
+      {/* ====================================================== */}
+
+      <section className="border-y border-white/10 bg-white/[0.03] px-4 py-8 sm:px-6">
+
+        <div className="mx-auto max-w-7xl">
+
+          <div
+            className="
+              flex
+              flex-col
+              gap-3
+              sm:flex-row
+              sm:items-center
+              sm:justify-between
+            "
+          >
+
+            <div>
+
+              <p className="text-xs font-black uppercase tracking-[0.20em] text-[#00CCCD]">
+                2026-27 Season
+              </p>
+
+              <h2 className="mt-2 text-2xl font-black">
+                10 Clubs. One League.
+              </h2>
+
+            </div>
+
+
+            <p className="max-w-xl text-sm leading-6 text-gray-400 sm:text-right">
+              A competitive futsal platform connecting players,
+              clubs, results, standings and individual
+              performances throughout the season.
+            </p>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
+
+      {/* ====================================================== */}
+      {/* STANDINGS PREVIEW */}
+      {/* ====================================================== */}
+
+      <section className="border-t border-black/10 bg-[#030707] px-4 py-14 sm:px-6">
+
+        <div className="mx-auto max-w-5xl">
+
+
+          {/* TITLE */}
+
+          <div className="mb-8 text-center">
+
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-[#00CCCD]">
+              Competition
+            </p>
+
+            <h2 className="mt-2 text-3xl font-black text-white">
+              League Table
+            </h2>
+
+          </div>
+
+
+          {/* TABLE */}
+
+          <div className="overflow-hidden rounded-2xl bg-white text-black">
+
+
+            {/* HEADER */}
+
+            <div
+              className="
+                grid
+                grid-cols-[40px_1fr_60px]
+                border-b
+                border-gray-200
+                bg-gray-50
+                px-4
+                py-4
+                text-xs
+                font-black
+                uppercase
+                tracking-wider
+                text-gray-500
+                sm:grid-cols-[50px_1fr_80px]
+                sm:px-5
+              "
+            >
+
+              <span>
+                #
+              </span>
+
+              <span>
+                Team
+              </span>
+
+              <span className="text-center">
+                PTS
               </span>
 
             </div>
 
-          ))}
+
+            {/* TOP THREE */}
+
+            {topThree.map(
+              (team, index) => (
+
+                <div
+                  key={team.teamId}
+                  className={`
+                    grid
+                    grid-cols-[40px_1fr_60px]
+                    items-center
+                    px-4
+                    py-4
+                    sm:grid-cols-[50px_1fr_80px]
+                    sm:px-5
+
+                    ${
+                      index <
+                      topThree.length - 1
+                        ? "border-b border-gray-200"
+                        : ""
+                    }
+                  `}
+                >
+
+                  {/* POSITION */}
+
+                  <span className="font-black">
+                    {team.position}
+                  </span>
+
+
+                  {/* TEAM */}
+
+                  <Link
+                    href={`/teams/${team.slug}`}
+                    className="
+                      flex
+                      min-w-0
+                      items-center
+                      gap-3
+                      transition
+                      hover:text-[#008E90]
+                    "
+                  >
+
+                    <img
+                      src={
+                        team.logoUrl ??
+                        "/lcf-logo.png"
+                      }
+                      alt={team.name}
+                      className="h-8 w-8 shrink-0 object-contain"
+                    />
+
+                    <span className="truncate text-sm font-bold sm:text-base">
+                      {team.name}
+                    </span>
+
+                  </Link>
+
+
+                  {/* POINTS */}
+
+                  <span className="text-center font-black text-[#008E90]">
+                    {team.points}
+                  </span>
+
+                </div>
+
+              )
+            )}
+
+          </div>
+
+
+          {/* FULL STANDINGS */}
+
+          <div className="mt-8 text-center">
+
+            <Link
+              href="/standings"
+              className="
+                inline-flex
+                min-h-[48px]
+                items-center
+                justify-center
+                gap-2
+                rounded-full
+                border
+                border-[#00CCCD]
+                px-7
+                py-3
+                text-sm
+                font-black
+                text-[#00CCCD]
+                transition
+                hover:bg-[#00CCCD]
+                hover:text-black
+              "
+            >
+              View Full Standings →
+            </Link>
+
+          </div>
 
         </div>
 
+      </section>
 
-        {/* FULL STANDINGS BUTTON */}
-        <div className="mt-8 text-center">
+    </main>
+  );
+}
 
-          <Link
-            href="/standings"
-            className="inline-flex items-center gap-2 rounded-full border border-[#00CCCD] px-7 py-3 font-bold text-[#00CCCD] transition duration-300 hover:bg-[#00CCCD] hover:text-black"
-          >
-            View Full Standings →
-          </Link>
 
-        </div>
+// ============================================================
+// SMALL LEAGUE STAT CARD
+// ============================================================
 
-      </div>
+function LeagueStat({
+  value,
+  label,
+}: {
+  value: string;
+  label: string;
+}) {
 
-    </section>
-  
-  </main>
-)};
+  return (
+
+    <div
+      className="
+        rounded-2xl
+        border
+        border-white/10
+        bg-white/[0.03]
+        px-4
+        py-5
+        text-center
+        sm:px-5
+      "
+    >
+
+      <p className="text-2xl font-black text-white sm:text-3xl">
+        {value}
+      </p>
+
+      <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-gray-500 sm:text-xs">
+        {label}
+      </p>
+
+    </div>
+
+  );
+}

@@ -65,7 +65,7 @@ export default function RootLayout({
       `}
     >
 
-      <body className="min-h-full bg-[#030707]">
+      <body className="min-h-full bg-[#030707] pb-20 md:pb-0">
 
         <SiteNavbar />
 

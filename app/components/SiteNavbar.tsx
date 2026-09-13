@@ -6,6 +6,7 @@ import {
 
 import Image from "next/image";
 import Link from "next/link";
+
 import {
   usePathname,
 } from "next/navigation";
@@ -14,18 +15,22 @@ import {
 const navigation = [
   {
     name: "Home",
+    shortName: "Home",
     href: "/",
   },
   {
     name: "Matches",
+    shortName: "Matches",
     href: "/matches",
   },
   {
     name: "Standings",
+    shortName: "Table",
     href: "/standings",
   },
   {
     name: "Players",
+    shortName: "Players",
     href: "/players",
   },
 ];
@@ -40,9 +45,9 @@ export default function SiteNavbar() {
     useState(false);
 
 
-  // --------------------------------
+  // =========================================
   // CHECK ACTIVE PAGE
-  // --------------------------------
+  // =========================================
 
   function isActive(
     href: string
@@ -58,6 +63,56 @@ export default function SiteNavbar() {
   }
 
 
+  // =========================================
+  // CURRENT MOBILE PAGE NAME
+  // =========================================
+
+  function currentPageName() {
+
+    if (
+      pathname.startsWith(
+        "/matches"
+      )
+    ) {
+      return "Matches";
+    }
+
+    if (
+      pathname.startsWith(
+        "/standings"
+      )
+    ) {
+      return "Standings";
+    }
+
+    if (
+      pathname.startsWith(
+        "/players"
+      )
+    ) {
+      return "Players";
+    }
+
+    if (
+      pathname.startsWith(
+        "/teams"
+      )
+    ) {
+      return "Team";
+    }
+
+    if (
+      pathname.startsWith(
+        "/admin"
+      )
+    ) {
+      return "Administration";
+    }
+
+    return "Home";
+  }
+
+
   return (
     <>
 
@@ -65,12 +120,36 @@ export default function SiteNavbar() {
       {/* MAIN NAVBAR */}
       {/* ================================= */}
 
-      <nav className="fixed left-0 top-0 z-50 w-full border-b border-white/10 bg-black">
+      <nav
+        className="
+          fixed
+          left-0
+          top-0
+          z-50
+          w-full
+          border-b
+          border-white/10
+          bg-black
+        "
+      >
 
-        <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6">
+        <div
+          className="
+            mx-auto
+            flex
+            h-[72px]
+            max-w-7xl
+            items-center
+            justify-between
+            px-4
+            sm:px-6
+          "
+        >
 
 
-          {/* LOGO */}
+          {/* ================================= */}
+          {/* LOGO + CURRENT PAGE */}
+          {/* ================================= */}
 
           <Link
             href="/"
@@ -89,11 +168,41 @@ export default function SiteNavbar() {
               className="h-10 w-10 object-contain"
             />
 
-            <span className="text-xl font-black tracking-[0.20em] text-[#00CCCD]">
-              LCF
-            </span>
+
+            <div className="min-w-0">
+
+              <p
+                className="
+                  text-xl
+                  font-black
+                  tracking-[0.20em]
+                  text-[#00CCCD]
+                "
+              >
+                LCF
+              </p>
+
+
+              {/* CURRENT PAGE - MOBILE ONLY */}
+
+              <p
+                className="
+                  mt-[1px]
+                  text-[9px]
+                  font-black
+                  uppercase
+                  tracking-[0.18em]
+                  text-gray-500
+                  md:hidden
+                "
+              >
+                {currentPageName()}
+              </p>
+
+            </div>
 
           </Link>
+
 
 
           {/* ================================= */}
@@ -110,11 +219,17 @@ export default function SiteNavbar() {
                     item.href
                   );
 
+
                 return (
 
                   <Link
                     key={item.href}
                     href={item.href}
+                    aria-current={
+                      active
+                        ? "page"
+                        : undefined
+                    }
                     className={`
                       group
                       relative
@@ -165,6 +280,7 @@ export default function SiteNavbar() {
           </div>
 
 
+
           {/* ================================= */}
           {/* DESKTOP LOGIN */}
           {/* ================================= */}
@@ -192,8 +308,9 @@ export default function SiteNavbar() {
               }
             `}
           >
-            Login
+            Admin
           </Link>
+
 
 
           {/* ================================= */}
@@ -285,6 +402,7 @@ export default function SiteNavbar() {
         </div>
 
 
+
         {/* ================================= */}
         {/* MOBILE MENU */}
         {/* ================================= */}
@@ -317,11 +435,17 @@ export default function SiteNavbar() {
                     item.href
                   );
 
+
                 return (
 
                   <Link
                     key={item.href}
                     href={item.href}
+                    aria-current={
+                      active
+                        ? "page"
+                        : undefined
+                    }
                     onClick={() =>
                       setMenuOpen(
                         false
@@ -329,11 +453,11 @@ export default function SiteNavbar() {
                     }
                     className={`
                       flex
+                      min-h-[52px]
                       items-center
                       justify-between
                       rounded-xl
                       px-4
-                      py-4
                       text-base
                       font-black
                       transition
@@ -353,7 +477,15 @@ export default function SiteNavbar() {
 
                     {active && (
 
-                      <span className="h-2 w-2 rounded-full bg-[#00CCCD]" />
+                      <div className="flex items-center gap-2">
+
+                        <span className="text-[10px] font-black uppercase tracking-wider">
+                          You are here
+                        </span>
+
+                        <span className="h-2 w-2 rounded-full bg-[#00CCCD]" />
+
+                      </div>
 
                     )}
 
@@ -365,7 +497,7 @@ export default function SiteNavbar() {
             )}
 
 
-            {/* MOBILE LOGIN */}
+            {/* MOBILE ADMIN */}
 
             <div className="pt-3">
 
@@ -381,19 +513,19 @@ export default function SiteNavbar() {
                   w-full
                   rounded-xl
                   border
-                  border-[#00CCCD]/50
+                  border-white/10
                   px-4
                   py-4
                   text-center
                   text-sm
                   font-black
-                  text-[#00CCCD]
+                  text-gray-400
                   transition
-                  hover:bg-[#00CCCD]
-                  hover:text-black
+                  hover:border-[#00CCCD]/50
+                  hover:text-[#00CCCD]
                 "
               >
-                Login
+                Admin Login
               </Link>
 
             </div>
@@ -405,11 +537,24 @@ export default function SiteNavbar() {
       </nav>
 
 
+
       {/* ================================= */}
       {/* TEAM LOGO STRIP */}
+      {/* KEEP 64PX HEIGHT */}
       {/* ================================= */}
 
-      <div className="fixed left-0 top-[72px] z-40 w-full border-b border-gray-200 bg-white">
+      <div
+        className="
+          fixed
+          left-0
+          top-[72px]
+          z-40
+          w-full
+          border-b
+          border-gray-200
+          bg-white
+        "
+      >
 
         <div
           className="
@@ -418,7 +563,7 @@ export default function SiteNavbar() {
             h-[64px]
             max-w-7xl
             items-center
-            gap-8
+            gap-7
             overflow-x-auto
             px-4
             sm:justify-between
@@ -481,9 +626,123 @@ export default function SiteNavbar() {
 
       </div>
 
+
+
+      {/* ================================= */}
+      {/* MOBILE BOTTOM NAVIGATION */}
+      {/* ================================= */}
+
+      <nav
+        aria-label="Mobile primary navigation"
+        className="
+          fixed
+          bottom-0
+          left-0
+          z-50
+          w-full
+          border-t
+          border-white/10
+          bg-black/95
+          backdrop-blur-xl
+          md:hidden
+        "
+      >
+
+        <div
+          className="
+            mx-auto
+            grid
+            h-[68px]
+            max-w-xl
+            grid-cols-4
+          "
+        >
+
+          {navigation.map(
+            (item) => {
+
+              const active =
+                isActive(
+                  item.href
+                );
+
+
+              return (
+
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={
+                    active
+                      ? "page"
+                      : undefined
+                  }
+                  onClick={() =>
+                    setMenuOpen(
+                      false
+                    )
+                  }
+                  className={`
+                    relative
+                    flex
+                    min-w-0
+                    items-center
+                    justify-center
+                    px-1
+                    text-center
+                    text-[10px]
+                    font-black
+                    uppercase
+                    tracking-[0.03em]
+                    transition
+
+                    ${
+                      active
+                        ? "bg-[#00CCCD]/[0.06] text-[#00CCCD]"
+                        : "text-gray-500 active:bg-white/[0.05]"
+                    }
+                  `}
+                >
+
+                  {/* ACTIVE LINE */}
+
+                  {active && (
+
+                    <span
+                      className="
+                        absolute
+                        left-1/2
+                        top-0
+                        h-[3px]
+                        w-10
+                        -translate-x-1/2
+                        rounded-b-full
+                        bg-[#00CCCD]
+                      "
+                    />
+
+                  )}
+
+
+                  <span className="truncate">
+                    {item.shortName}
+                  </span>
+
+                </Link>
+
+              );
+
+            }
+          )}
+
+        </div>
+
+      </nav>
+
     </>
   );
 }
+
 
 
 // =================================
@@ -500,7 +759,14 @@ function TeamLogo({
 
   return (
 
-    <div className="flex min-w-[48px] items-center justify-center">
+    <div
+      className="
+        flex
+        min-w-[45px]
+        items-center
+        justify-center
+      "
+    >
 
       <Image
         src={src}
@@ -513,9 +779,9 @@ function TeamLogo({
           object-contain
           transition
           duration-300
-          hover:scale-110
           sm:h-10
           sm:w-10
+          md:hover:scale-110
         "
       />
 
