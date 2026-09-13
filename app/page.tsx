@@ -357,7 +357,7 @@ export default async function Home() {
           >
 
             <LeagueStat
-              value="66"
+              value="67"
               label="Total Matches"
             />
 
