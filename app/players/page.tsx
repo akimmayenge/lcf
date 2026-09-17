@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+import { supabase } from "@/lib/supabase";
 
 
 // ==========================================================
@@ -71,6 +73,55 @@ type CardPlayer = {
 };
 
 
+// ==========================================================
+// DATABASE TYPES
+// ==========================================================
+
+type DatabasePlayer = {
+  id: number;
+  first_name: string;
+  last_name: string;
+};
+
+type DatabaseTeam = {
+  id: number;
+  name: string;
+};
+
+type DatabaseRoster = {
+  player_id: number;
+  team_id: number;
+  position: string | null;
+  active: boolean;
+  team: DatabaseTeam | DatabaseTeam[] | null;
+};
+
+type DatabasePlayerMatchStat = {
+  player_id: number;
+  match_id: number;
+  team_id: number | null;
+  present: boolean;
+  goals: number;
+  yellow_cards: number;
+  red_cards: number;
+  is_motm: boolean;
+  is_goalkeeper: boolean;
+};
+
+type DatabaseMatch = {
+  id: number;
+  home_team_id: number;
+  away_team_id: number;
+  home_score: number | null;
+  away_score: number | null;
+  status: string;
+};
+
+type DatabaseMatchdayAward = {
+  potw_player_id: number;
+};
+
+
 
 // ==========================================================
 // PAGE
@@ -87,21 +138,738 @@ export default function PlayersPage() {
 
 
   // ========================================================
-  // PLAYER DATA
-  //
-  // Leave everything empty before the season.
-  // Add REAL players manually when statistics become available.
+  // LIVE PLAYER DATA FROM SUPABASE
   // ========================================================
 
-  const scorers: Scorer[] = [];
+  const [scorers, setScorers] = useState<Scorer[]>([]);
 
-  const mvpPlayers: MvpPlayer[] = [];
+  const [mvpPlayers, setMvpPlayers] = useState<MvpPlayer[]>([]);
 
-  const goalkeepers: Goalkeeper[] = [];
+  const [goalkeepers, setGoalkeepers] = useState<Goalkeeper[]>([]);
 
-  const yellowCards: CardPlayer[] = [];
+  const [yellowCards, setYellowCards] = useState<CardPlayer[]>([]);
 
-  const redCards: CardPlayer[] = [];
+  const [redCards, setRedCards] = useState<CardPlayer[]>([]);
+
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  const [statsError, setStatsError] = useState<string | null>(null);
+
+
+  useEffect(() => {
+
+    let cancelled = false;
+
+
+    async function loadPlayerStatistics() {
+
+      try {
+
+        setLoadingStats(true);
+        setStatsError(null);
+
+
+        // ======================================================
+        // PLAYERS
+        // ======================================================
+
+        const {
+          data: playersData,
+          error: playersError,
+        } =
+          await supabase
+            .from("players")
+            .select(`
+              id,
+              first_name,
+              last_name
+            `);
+
+
+        if (playersError) {
+          throw playersError;
+        }
+
+
+        const players =
+          (playersData ?? []) as DatabasePlayer[];
+
+
+        // ======================================================
+        // CURRENT ROSTERS / TEAMS
+        // ======================================================
+
+        const {
+          data: rostersData,
+          error: rostersError,
+        } =
+          await supabase
+            .from("team_rosters")
+            .select(`
+              player_id,
+              team_id,
+              position,
+              active,
+
+              team:teams (
+                id,
+                name
+              )
+            `)
+            .eq("season_id", 1)
+            .eq("active", true);
+
+
+        if (rostersError) {
+          throw rostersError;
+        }
+
+
+        const rosters =
+          (rostersData ?? []) as unknown as DatabaseRoster[];
+
+
+        // ======================================================
+        // ALL PLAYER MATCH STATS
+        // ======================================================
+
+        const {
+          data: playerStatsData,
+          error: playerStatsError,
+        } =
+          await supabase
+            .from("player_match_stats")
+            .select(`
+              player_id,
+              match_id,
+              team_id,
+              present,
+              goals,
+              yellow_cards,
+              red_cards,
+              is_motm,
+              is_goalkeeper
+            `);
+
+
+        if (playerStatsError) {
+          throw playerStatsError;
+        }
+
+
+        const playerStats =
+          (playerStatsData ?? []) as DatabasePlayerMatchStat[];
+
+
+        // ======================================================
+        // FINISHED MATCHES NEEDED FOR WIN / GK CALCULATIONS
+        // ======================================================
+
+        const matchIds =
+          Array.from(
+            new Set(
+              playerStats.map(
+                (stat) =>
+                  stat.match_id
+              )
+            )
+          );
+
+
+        let matches: DatabaseMatch[] = [];
+
+
+        if (matchIds.length > 0) {
+
+          const {
+            data: matchData,
+            error: matchError,
+          } =
+            await supabase
+              .from("matches")
+              .select(`
+                id,
+                home_team_id,
+                away_team_id,
+                home_score,
+                away_score,
+                status
+              `)
+              .in(
+                "id",
+                matchIds
+              )
+              .eq(
+                "status",
+                "finished"
+              );
+
+
+          if (matchError) {
+            throw matchError;
+          }
+
+
+          matches =
+            (matchData ?? []) as DatabaseMatch[];
+        }
+
+
+        // ======================================================
+        // PLAYER OF THE WEEK AWARDS
+        // ======================================================
+
+        const {
+          data: potwData,
+          error: potwError,
+        } =
+          await supabase
+            .from("matchday_awards")
+            .select(`
+              potw_player_id
+            `)
+            .eq(
+              "season_id",
+              1
+            );
+
+
+        if (potwError) {
+          throw potwError;
+        }
+
+
+        const potwAwards =
+          (potwData ?? []) as DatabaseMatchdayAward[];
+
+
+        // ======================================================
+        // FAST LOOKUP MAPS
+        // ======================================================
+
+        const matchMap =
+          new Map<number, DatabaseMatch>();
+
+
+        matches.forEach(
+          (match) => {
+
+            matchMap.set(
+              match.id,
+              match
+            );
+
+          }
+        );
+
+
+        const rosterMap =
+          new Map<number, DatabaseRoster>();
+
+
+        rosters.forEach(
+          (roster) => {
+
+            rosterMap.set(
+              roster.player_id,
+              roster
+            );
+
+          }
+        );
+
+
+        const statsByPlayer =
+          new Map<
+            number,
+            DatabasePlayerMatchStat[]
+          >();
+
+
+        playerStats.forEach(
+          (stat) => {
+
+            const existing =
+              statsByPlayer.get(
+                stat.player_id
+              ) ?? [];
+
+
+            existing.push(stat);
+
+
+            statsByPlayer.set(
+              stat.player_id,
+              existing
+            );
+
+          }
+        );
+
+
+        const potwCountByPlayer =
+          new Map<number, number>();
+
+
+        potwAwards.forEach(
+          (award) => {
+
+            const current =
+              potwCountByPlayer.get(
+                award.potw_player_id
+              ) ?? 0;
+
+
+            potwCountByPlayer.set(
+              award.potw_player_id,
+              current + 1
+            );
+
+          }
+        );
+
+
+        // ======================================================
+        // BUILD ALL RANKING TABLES
+        // ======================================================
+
+        const newScorers: Scorer[] = [];
+
+        const newMvpPlayers: MvpPlayer[] = [];
+
+        const newGoalkeepers: Goalkeeper[] = [];
+
+        const newYellowCards: CardPlayer[] = [];
+
+        const newRedCards: CardPlayer[] = [];
+
+
+        players.forEach(
+          (player) => {
+
+            const roster =
+              rosterMap.get(
+                player.id
+              );
+
+
+            const rawTeam =
+              roster?.team ?? null;
+
+
+            const team =
+              Array.isArray(rawTeam)
+                ? rawTeam[0] ?? null
+                : rawTeam;
+
+
+            const teamName =
+              team?.name ??
+              "No Team";
+
+
+            const currentTeamId =
+              roster?.team_id ??
+              null;
+
+
+            const position =
+              roster?.position ??
+              null;
+
+
+            const allPlayerStats =
+              statsByPlayer.get(
+                player.id
+              ) ?? [];
+
+
+            const presentStats =
+              allPlayerStats.filter(
+                (stat) =>
+                  stat.present
+              );
+
+
+            const gamesPlayed =
+              presentStats.length;
+
+
+            const totalGoals =
+              presentStats.reduce(
+                (
+                  total,
+                  stat
+                ) =>
+                  total +
+                  (
+                    stat.goals ?? 0
+                  ),
+                0
+              );
+
+
+            const totalYellow =
+              presentStats.reduce(
+                (
+                  total,
+                  stat
+                ) =>
+                  total +
+                  (
+                    stat.yellow_cards ?? 0
+                  ),
+                0
+              );
+
+
+            const totalRed =
+              presentStats.reduce(
+                (
+                  total,
+                  stat
+                ) =>
+                  total +
+                  (
+                    stat.red_cards ?? 0
+                  ),
+                0
+              );
+
+
+            const totalMotm =
+              presentStats.filter(
+                (stat) =>
+                  stat.is_motm
+              ).length;
+
+
+            const totalPotw =
+              potwCountByPlayer.get(
+                player.id
+              ) ?? 0;
+
+
+            function getStatTeamId(
+              stat: DatabasePlayerMatchStat
+            ) {
+
+              return (
+                stat.team_id ??
+                currentTeamId
+              );
+
+            }
+
+
+            function isWinningAppearance(
+              stat: DatabasePlayerMatchStat
+            ) {
+
+              if (!stat.present) {
+                return false;
+              }
+
+
+              const match =
+                matchMap.get(
+                  stat.match_id
+                );
+
+
+              const teamId =
+                getStatTeamId(
+                  stat
+                );
+
+
+              if (
+                !match ||
+                teamId === null ||
+                match.home_score === null ||
+                match.away_score === null
+              ) {
+
+                return false;
+              }
+
+
+              if (
+                teamId ===
+                match.home_team_id
+              ) {
+
+                return (
+                  match.home_score >
+                  match.away_score
+                );
+              }
+
+
+              if (
+                teamId ===
+                match.away_team_id
+              ) {
+
+                return (
+                  match.away_score >
+                  match.home_score
+                );
+              }
+
+
+              return false;
+            }
+
+
+            const winningApps =
+              presentStats.filter(
+                (stat) =>
+                  isWinningAppearance(
+                    stat
+                  )
+              ).length;
+
+
+            const playerName =
+              `${player.first_name} ${player.last_name}`;
+
+
+            // GOLDEN BOOT
+
+            if (gamesPlayed > 0) {
+
+              newScorers.push({
+                id: player.id,
+                name: playerName,
+                team: teamName,
+                goals: totalGoals,
+                games: gamesPlayed,
+              });
+
+            }
+
+
+            // MVP RACE
+
+            if (
+              gamesPlayed > 0 ||
+              totalPotw > 0
+            ) {
+
+              newMvpPlayers.push({
+                id: player.id,
+                name: playerName,
+                team: teamName,
+                motm: totalMotm,
+                potw: totalPotw,
+                winningApps,
+              });
+
+            }
+
+
+            // DISCIPLINE
+
+            if (totalYellow > 0) {
+
+              newYellowCards.push({
+                id: player.id,
+                name: playerName,
+                team: teamName,
+                games: gamesPlayed,
+                cards: totalYellow,
+              });
+
+            }
+
+
+            if (totalRed > 0) {
+
+              newRedCards.push({
+                id: player.id,
+                name: playerName,
+                team: teamName,
+                games: gamesPlayed,
+                cards: totalRed,
+              });
+
+            }
+
+
+            // GOALKEEPER / GOLDEN GLOVE
+
+            const goalkeeperStats =
+              presentStats.filter(
+                (stat) =>
+                  stat.is_goalkeeper
+              );
+
+
+            const goalkeeperGames =
+              goalkeeperStats.length;
+
+
+            let goalkeeperWins = 0;
+            let cleanSheets = 0;
+            let goalkeeperMotm = 0;
+            let goalsAllowed = 0;
+
+
+            goalkeeperStats.forEach(
+              (stat) => {
+
+                const match =
+                  matchMap.get(
+                    stat.match_id
+                  );
+
+
+                const teamId =
+                  getStatTeamId(
+                    stat
+                  );
+
+
+                if (
+                  !match ||
+                  teamId === null ||
+                  match.home_score === null ||
+                  match.away_score === null
+                ) {
+
+                  return;
+                }
+
+
+                if (
+                  isWinningAppearance(
+                    stat
+                  )
+                ) {
+
+                  goalkeeperWins++;
+                }
+
+
+                if (stat.is_motm) {
+                  goalkeeperMotm++;
+                }
+
+
+                if (
+                  teamId ===
+                  match.home_team_id
+                ) {
+
+                  goalsAllowed +=
+                    match.away_score;
+
+
+                  if (
+                    match.away_score === 0
+                  ) {
+
+                    cleanSheets++;
+                  }
+
+                } else if (
+                  teamId ===
+                  match.away_team_id
+                ) {
+
+                  goalsAllowed +=
+                    match.home_score;
+
+
+                  if (
+                    match.home_score === 0
+                  ) {
+
+                    cleanSheets++;
+                  }
+
+                }
+
+              }
+            );
+
+
+            const isRegisteredGoalkeeper =
+              position
+                ?.toUpperCase() ===
+              "GK";
+
+
+            if (
+              isRegisteredGoalkeeper ||
+              goalkeeperGames > 0
+            ) {
+
+              newGoalkeepers.push({
+                id: player.id,
+                name: playerName,
+                team: teamName,
+                games: goalkeeperGames,
+                winningApps: goalkeeperWins,
+                cleanSheets,
+                motm: goalkeeperMotm,
+                goalsAllowed,
+              });
+
+            }
+
+          }
+        );
+
+
+        if (!cancelled) {
+
+          setScorers(newScorers);
+          setMvpPlayers(newMvpPlayers);
+          setGoalkeepers(newGoalkeepers);
+          setYellowCards(newYellowCards);
+          setRedCards(newRedCards);
+
+        }
+
+
+      } catch (error) {
+
+        console.error(
+          "Player rankings error:",
+          error
+        );
+
+
+        if (!cancelled) {
+
+          setStatsError(
+            "Unable to load player statistics."
+          );
+
+        }
+
+
+      } finally {
+
+        if (!cancelled) {
+          setLoadingStats(false);
+        }
+
+      }
+
+    }
+
+
+    loadPlayerStatistics();
+
+
+    return () => {
+      cancelled = true;
+    };
+
+  }, []);
 
 
 
@@ -1316,11 +2084,35 @@ export default function PlayersPage() {
 
           <div className="overflow-x-auto">
 
-            <table className="w-full min-w-[800px]">
+            {loadingStats ? (
 
-              {renderTable()}
+              <div className="px-6 py-16 text-center">
 
-            </table>
+                <p className="font-bold text-gray-500">
+                  Loading official LCF player statistics...
+                </p>
+
+              </div>
+
+            ) : statsError ? (
+
+              <div className="px-6 py-16 text-center">
+
+                <p className="font-bold text-red-600">
+                  {statsError}
+                </p>
+
+              </div>
+
+            ) : (
+
+              <table className="w-full min-w-[800px]">
+
+                {renderTable()}
+
+              </table>
+
+            )}
 
           </div>
 
